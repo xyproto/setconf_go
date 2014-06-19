@@ -8,6 +8,7 @@ import (
 type Cursor struct {
 	bytepos int // change to int64 later
 	data []byte
+	// consider caching len(data) here
 }
 
 func NewCursor(data []byte) *Cursor {
