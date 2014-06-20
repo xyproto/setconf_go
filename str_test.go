@@ -24,11 +24,51 @@ func TestCursor(t *testing.T) {
 				t.Errorf("The word at byte position 4 should be 42 but is: %s\n", w)
 			}
 		}
-		if c.Next() != nil {
+		if c.GotoNextByte() != nil {
 			if c.EOL() == true || c.BOL() == true {
 				t.Errorf("End of line or beginning of line is true after the last byte!\n")
 			}
 			break
 		}
 	}
+}
+
+func TestKeys(t *testing.T) {
+	text := []byte("a_1 = 1\nx:=2;\nZing:: 97\n  rocket92 =42\n #foo=bar\n// ignore\n/* // # ignore\n\nignore\nblublu*/\nhi=2\n\n")
+	fmt.Println("\n\n", string(text))
+	c := NewCursor(text)
+	for c.ValidRange() {
+		fmt.Println("--- start ---")
+
+		// Check if we are at a comment
+		c.RegisterCommentMarker()
+		fmt.Println("IN COMMENT", c.InComment())
+
+		// Refactor/rewrite
+		if !c.InComment() {
+			c.GotoNextKeyword()
+			key := c.KeyString()
+			fmt.Println(key)
+			if !c.InComment() {
+				c.GotoNextDelimiter()
+				fmt.Println(c.DelimString())
+				if !c.InComment() {
+					c.GotoNextValue()
+					fmt.Println(c.ValueString())
+				}
+			}
+		} else {
+			// Continue until we are no longer in a comment
+			for c.ValidRange() && c.InComment() {
+				c.GotoNextCommentMarker()
+				fmt.Println("AT", c.CommentMarkerString())
+				fmt.Println("level", c.GetCommentLevel())
+				fmt.Println("SLC", c.AtSingleComment())
+			}
+		}
+	}
+
+	// Two variations over keys and values in configuration files
+	//oneliner := "^kdv$"
+	//multiliner := "^kd(v*)"
 }
