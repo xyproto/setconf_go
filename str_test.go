@@ -33,6 +33,7 @@ func TestCursor(t *testing.T) {
 	}
 }
 
+// Detecting nested comments is a work in progress
 func TestKeys(t *testing.T) {
 	text := []byte("a_1 = 1\nx:=2;\nZing:: 97\n  rocket92 =42\n #foo=bar\n// ignore\n/* // # ignore\n\nignore\nblublu*/\nhi=2\n\n")
 	fmt.Println("\n\n", string(text))
@@ -47,20 +48,27 @@ func TestKeys(t *testing.T) {
 		// Refactor/rewrite
 		if !c.InComment() {
 			c.GotoNextKeyword()
+			fmt.Println("IN COMMENT", c.InComment())
 			key := c.KeyString()
 			fmt.Println(key)
 			if !c.InComment() {
 				c.GotoNextDelimiter()
+				fmt.Println("IN COMMENT", c.InComment())
 				fmt.Println(c.DelimString())
 				if !c.InComment() {
 					c.GotoNextValue()
+					fmt.Println("IN COMMENT", c.InComment())
 					fmt.Println(c.ValueString())
 				}
+			}
+			if c.InComment() {
+				c.GotoEOL()
 			}
 		} else {
 			// Continue until we are no longer in a comment
 			for c.ValidRange() && c.InComment() {
 				c.GotoNextCommentMarker()
+				fmt.Println("IN COMMENT", c.InComment())
 				fmt.Println("AT", c.CommentMarkerString())
 				fmt.Println("level", c.GetCommentLevel())
 				fmt.Println("SLC", c.AtSingleComment())

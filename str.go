@@ -31,12 +31,12 @@ func CommentLetter(b byte) bool {
 
 // Letters that are likely to be part of a key
 func KeyLetter(b byte) bool {
-	return (ConfigLetter(b) && !DelimLetter(b)) && (b != '\n')
+	return (ConfigLetter(b) && !DelimLetter(b)) && !EOL_marker(b)
 }
 
 // Letters that are likely to be part of a delimiter. A key value delimiter may be just a blank or \t.
 func DelimLetter(b byte) bool {
-	return strings.Contains("=<>: \t", string(b)) && (b != '\n')
+	return strings.Contains("=<>: \t", string(b)) && !EOL_marker(b)
 }
 
 // Letters that are likely to be part of a value that only spans one line
@@ -49,6 +49,11 @@ func GenerateMultilineValueLetterCheck(endmark byte) func(byte) bool {
 	return func(b byte) bool {
 		return b != endmark
 	}
+}
+
+// End of line marker
+func EOL_marker(b byte) bool {
+	return b == '\n'
 }
 
 // Return the word that starts at the cursor, or an empty string
@@ -106,6 +111,11 @@ func (c *Cursor) ValueString() string {
 // Return the multiline value that starts at the cursor and ends at the endmark, or an empty string
 func (c *Cursor) MultiValueString(endmark byte) string {
 	return c.GetWord(GenerateMultilineValueLetterCheck(endmark))
+}
+
+// Return the EOL marker that starts at the cursor, or an empty string
+func (c *Cursor) EOLString() string {
+	return c.GetWord(EOL_marker)
 }
 
 // Return how deeply we are nested into comments
@@ -238,6 +248,12 @@ func (c *Cursor) GotoNextValue() error {
 // Move to the next comment marker
 func (c *Cursor) GotoNextCommentMarker() error {
 	err := c.GotoNextWord(c.CommentMarkerString)
+	c.RegisterCommentMarker()
+	return err
+}
+
+func (c *Cursor) GotoEOL() error {
+	err := c.GotoNextWord(c.EOLString)
 	c.RegisterCommentMarker()
 	return err
 }
